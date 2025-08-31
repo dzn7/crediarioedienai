@@ -32,12 +32,17 @@ git push -u origin main
 3. Importe o repositório `dzn7/crediarioedienai`
 
 ### Passo 2: Configurar Environment Variables
-No dashboard da Vercel, adicione estas variáveis:
+No dashboard da Vercel, vá em **Settings > Environment Variables** e adicione:
 
-```
-MISTRAL_API_KEY = YkTCIOXtxMv8k6nz6oTbtwB4kU6CSJtH
-NEXT_PUBLIC_BACKEND_URL = https://southamerica-east1-edienailanches.cloudfunctions.net
-```
+**Nome da Variável:** `MISTRAL_API_KEY`  
+**Valor:** `YkTCIOXtxMv8k6nz6oTbtwB4kU6CSJtH`  
+**Environments:** Production, Preview, Development (marcar todos)
+
+**Nome da Variável:** `NEXT_PUBLIC_BACKEND_URL`  
+**Valor:** `https://southamerica-east1-edienailanches.cloudfunctions.net`  
+**Environments:** Production, Preview, Development (marcar todos)
+
+⚠️ **IMPORTANTE:** Adicione as variáveis MANUALMENTE no dashboard, não use secrets ou referências.
 
 ### Passo 3: Deploy Settings
 - **Framework Preset:** Next.js
