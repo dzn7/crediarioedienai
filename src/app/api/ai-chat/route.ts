@@ -35,7 +35,14 @@ interface AIAction {
 
  export async function POST(request: NextRequest) {
   try {
-    const { message, crediarios, userRole, userPin } = await request.json();
+    const headersRole = request.headers.get('x-user-role') || request.headers.get('X-User-Role') || '';
+    const headersPin = request.headers.get('x-user-pin') || request.headers.get('X-User-Pin') || '';
+
+    const body = await request.json();
+    const message = body?.message;
+    const crediarios = body?.crediarios;
+    const userRole = headersRole || body?.userRole || '';
+    const userPin = headersPin || body?.userPin || '';
 
     if (!MISTRAL_API_KEY) {
       return NextResponse.json({ error: 'MISTRAL_API_KEY ausente no ambiente' }, { status: 500 });
@@ -43,6 +50,11 @@ interface AIAction {
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Mensagem inválida' }, { status: 400 });
+    }
+
+    // Enforce auth presence for this API route
+    if (!userRole || !userPin) {
+      return NextResponse.json({ error: 'Autenticação necessária' }, { status: 401 });
     }
 
     // Normalize and reduce input to save tokens
@@ -191,7 +203,7 @@ Responda de forma inteligente e completa:`;
   } catch (error) {
     console.error('Erro na API do chat IA:', error);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' }, 
+      { error: error instanceof Error ? error.message : 'Erro interno do servidor' }, 
       { status: 500 }
     );
   }

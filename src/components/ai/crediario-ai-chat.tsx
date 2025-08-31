@@ -42,11 +42,18 @@ export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
     try {
       const userRole = localStorage.getItem('loggedInUserRole') || 'waiter';
       const userPin = localStorage.getItem('loggedInUserPin') || '';
-      
+
+      if (!userRole || !userPin) {
+        toast.error('Autenticação necessária. Faça login novamente.');
+        return 'Você precisa estar autenticado para usar a IA.';
+      }
+
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-User-Role': userRole,
+          'X-User-Pin': userPin,
         },
         body: JSON.stringify({
           message: userMessage,
@@ -57,7 +64,15 @@ export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Falha na comunicação com a IA');
+        let errorText = 'Falha na comunicação com a IA';
+        try {
+          const err = await response.json();
+          if (err?.error) errorText = String(err.error);
+        } catch {}
+        if (response.status === 401 || response.status === 403) {
+          toast.error('Sem permissão. Faça login novamente.');
+        }
+        throw new Error(errorText);
       }
 
       const data = await response.json();

@@ -20,7 +20,14 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, role: strin
 
 export async function POST(request: NextRequest) {
   try {
-    const { action, parameters, userRole, userPin } = await request.json();
+    const headersRole = request.headers.get('x-user-role') || request.headers.get('X-User-Role') || '';
+    const headersPin = request.headers.get('x-user-pin') || request.headers.get('X-User-Pin') || '';
+
+    const body = await request.json();
+    const action = body?.action;
+    const parameters = body?.parameters || {};
+    const userRole = headersRole || body?.userRole || '';
+    const userPin = headersPin || body?.userPin || '';
 
     if (!userRole || !userPin) {
       return NextResponse.json({ error: 'Autenticação necessária' }, { status: 401 });
@@ -44,7 +51,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!createResponse.ok) {
-          throw new Error('Falha ao criar crediário');
+          let errMsg = 'Falha ao criar crediário';
+          try { const e = await createResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: createResponse.status });
         }
         result = await createResponse.json();
         break;
@@ -62,7 +71,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!transactionResponse.ok) {
-          throw new Error('Falha ao adicionar transação');
+          let errMsg = 'Falha ao adicionar transação';
+          try { const e = await transactionResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: transactionResponse.status });
         }
         result = await transactionResponse.json();
         break;
@@ -77,7 +88,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!updateResponse.ok) {
-          throw new Error('Falha ao atualizar nome');
+          let errMsg = 'Falha ao atualizar nome';
+          try { const e = await updateResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: updateResponse.status });
         }
         result = await updateResponse.json();
         break;
@@ -91,7 +104,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!concludeResponse.ok) {
-          throw new Error('Falha ao concluir crediário');
+          let errMsg = 'Falha ao concluir crediário';
+          try { const e = await concludeResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: concludeResponse.status });
         }
         result = await concludeResponse.json();
         break;
@@ -102,7 +117,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!menuResponse.ok) {
-          throw new Error('Falha ao buscar cardápio');
+          let errMsg = 'Falha ao buscar cardápio';
+          try { const e = await menuResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: menuResponse.status });
         }
         result = await menuResponse.json();
         break;
@@ -113,7 +130,9 @@ export async function POST(request: NextRequest) {
         }, userRole, userPin);
         
         if (!pedidosResponse.ok) {
-          throw new Error('Falha ao buscar pedidos');
+          let errMsg = 'Falha ao buscar pedidos';
+          try { const e = await pedidosResponse.json(); if (e?.error || e?.message) errMsg = e.error || e.message; } catch {}
+          return NextResponse.json({ error: errMsg }, { status: pedidosResponse.status });
         }
         result = await pedidosResponse.json();
         break;
