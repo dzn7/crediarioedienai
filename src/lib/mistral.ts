@@ -1,16 +1,24 @@
 import { Mistral } from '@mistralai/mistralai';
-import { Crediario, Transaction } from '@/types/crediario';
+import { Crediario } from '@/types/crediario';
 import * as api from './api';
 import { formatBR } from './utils';
 
 const MISTRAL_API_KEY = 'YkTCIOXtxMv8k6nz6oTbtwB4kU6CSJtH';
 const mistral = new Mistral({ apiKey: MISTRAL_API_KEY });
 
+type AIParameters = {
+  crediarioId?: string;
+  amount?: number;
+  description?: string;
+  customerName?: string;
+  initialValue?: number;
+};
+
 interface AIAction {
   type: 'api_call' | 'analysis' | 'suggestion';
   action: string;
-  parameters?: any;
-  result?: any;
+  parameters?: AIParameters;
+  result?: string;
 }
 
 export class CrediarioAI {
@@ -26,7 +34,7 @@ export class CrediarioAI {
     const totalBalance = this.crediarios.reduce((sum, c) => sum + c.totalBalance, 0);
     const debtorsCount = this.crediarios.filter(c => c.totalBalance > 0).length;
     const averageBalance = this.crediarios.length > 0 ? totalBalance / this.crediarios.length : 0;
-    
+
     this.context = `
 SISTEMA DE CREDIÁRIO EDIENAI LANCHES
 
@@ -60,7 +68,7 @@ VOCÊ É UMA IA ESPECIALISTA EM GESTÃO DE CREDIÁRIOS. Pode analisar dados, faz
 
   async processMessage(userMessage: string): Promise<{ response: string; actions: AIAction[] }> {
     const actions: AIAction[] = [];
-    
+
     try {
       const prompt = `${this.context}
 
@@ -97,7 +105,10 @@ Responda de forma inteligente e útil:`;
         maxTokens: 1000
       });
 
-      const aiResponse = response.choices?.[0]?.message?.content || 'Desculpe, não consegui processar sua solicitação.';
+      const content = response.choices?.[0]?.message?.content;
+      const aiResponse: string = typeof content === 'string'
+        ? content
+        : 'Desculpe, não consegui processar sua solicitação.';
 
       // Parse potential API calls from response
       await this.parseAndExecuteActions(aiResponse, userMessage, actions);
@@ -118,17 +129,16 @@ Responda de forma inteligente e útil:`;
 
   private async parseAndExecuteActions(aiResponse: string, userMessage: string, actions: AIAction[]): Promise<void> {
     const lowerMessage = userMessage.toLowerCase();
-    const lowerResponse = aiResponse.toLowerCase();
 
     // Detectar se o usuário quer criar um crediário
     if (lowerMessage.includes('criar') && (lowerMessage.includes('crediário') || lowerMessage.includes('cliente'))) {
       const nameMatch = userMessage.match(/(?:para|cliente)\s+([A-Za-zÀ-ÿ\s]+?)(?:\s+com|\s+de|\s*$)/i);
       const valueMatch = userMessage.match(/r?\$?\s*(\d+(?:[.,]\d{2})?)/i);
-      
+
       if (nameMatch) {
         const customerName = nameMatch[1].trim();
         const initialValue = valueMatch ? parseFloat(valueMatch[1].replace(',', '.')) : 0;
-        
+
         actions.push({
           type: 'api_call',
           action: 'createCrediario',
@@ -141,14 +151,14 @@ Responda de forma inteligente e útil:`;
     if (lowerMessage.includes('pagamento') && lowerMessage.includes('adicionar')) {
       const nameMatch = userMessage.match(/(?:para|de)\s+([A-Za-zÀ-ÿ\s]+?)(?:\s+de|\s+com|\s*$)/i);
       const valueMatch = userMessage.match(/r?\$?\s*(\d+(?:[.,]\d{2})?)/i);
-      
+
       if (nameMatch && valueMatch) {
         const customerName = nameMatch[1].trim();
         const amount = parseFloat(valueMatch[1].replace(',', '.'));
-        const customer = this.crediarios.find(c => 
+        const customer = this.crediarios.find(c =>
           c.customerName.toLowerCase().includes(customerName.toLowerCase())
         );
-        
+
         if (customer) {
           actions.push({
             type: 'api_call',
@@ -163,14 +173,14 @@ Responda de forma inteligente e útil:`;
     if (lowerMessage.includes('consumo') && lowerMessage.includes('adicionar')) {
       const nameMatch = userMessage.match(/(?:para|de)\s+([A-Za-zÀ-ÿ\s]+?)(?:\s+de|\s+com|\s*$)/i);
       const valueMatch = userMessage.match(/r?\$?\s*(\d+(?:[.,]\d{2})?)/i);
-      
+
       if (nameMatch && valueMatch) {
         const customerName = nameMatch[1].trim();
         const amount = parseFloat(valueMatch[1].replace(',', '.'));
-        const customer = this.crediarios.find(c => 
+        const customer = this.crediarios.find(c =>
           c.customerName.toLowerCase().includes(customerName.toLowerCase())
         );
-        
+
         if (customer) {
           actions.push({
             type: 'api_call',
@@ -188,42 +198,48 @@ Responda de forma inteligente e útil:`;
     for (const action of actions) {
       try {
         switch (action.action) {
-          case 'createCrediario':
+          case 'createCrediario': {
+            const params = (action.parameters || {}) as AIParameters;
             const newCrediario = await api.createCrediario(
-              action.parameters.customerName,
-              action.parameters.initialValue
+              params.customerName!,
+              params.initialValue
             );
             executedActions.push({
               ...action,
               result: `Crediário criado com sucesso para ${newCrediario.customerName}`
             });
             break;
+          }
 
-          case 'addPayment':
-            const paymentResult = await api.addCrediarioTransaction(
-              action.parameters.crediarioId,
+          case 'addPayment': {
+            const params = (action.parameters || {}) as AIParameters;
+            await api.addCrediarioTransaction(
+              params.crediarioId!,
               'payment',
-              action.parameters.amount,
-              action.parameters.description
+              params.amount!,
+              params.description || 'Pagamento via IA'
             );
             executedActions.push({
               ...action,
-              result: `Pagamento de R$ ${formatBR(action.parameters.amount)} registrado`
+              result: `Pagamento de R$ ${formatBR(params.amount ?? 0)} registrado`
             });
             break;
+          }
 
-          case 'addConsumption':
-            const consumptionResult = await api.addCrediarioTransaction(
-              action.parameters.crediarioId,
+          case 'addConsumption': {
+            const params = (action.parameters || {}) as AIParameters;
+            await api.addCrediarioTransaction(
+              params.crediarioId!,
               'consumption',
-              action.parameters.amount,
-              action.parameters.description
+              params.amount!,
+              params.description || 'Consumo via IA'
             );
             executedActions.push({
               ...action,
-              result: `Consumo de R$ ${formatBR(action.parameters.amount)} adicionado`
+              result: `Consumo de R$ ${formatBR(params.amount ?? 0)} adicionado`
             });
             break;
+          }
 
           default:
             break;

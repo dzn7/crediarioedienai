@@ -24,7 +24,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}, role: strin
 
 interface AIAction {
   action: string;
-  parameters: any;
+  parameters: Record<string, unknown>;
   reasoning: string;
 }
 
@@ -136,7 +136,7 @@ Responda de forma inteligente e completa:`;
 
     // Parse if AI wants to execute an action
     const executedActions: AIAction[] = [];
-    const aiWantsToExecute = await detectAndExecuteActions(message, crediarios, userRole, userPin, executedActions);
+    await detectAndExecuteActions(message, crediarios, userRole, userPin, executedActions);
 
     return NextResponse.json({
       response: aiResponse,
@@ -194,7 +194,6 @@ async function detectAndExecuteActions(
         }, userRole, userPin);
         
         if (response.ok) {
-          const result = await response.json();
           executedActions.push({
             action: 'createCrediario',
             parameters: { customerName, initialValue },

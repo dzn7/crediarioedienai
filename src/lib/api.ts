@@ -1,5 +1,18 @@
 import { BACKEND_URL } from './firebase';
-import { Crediario, Transaction, MenuProduct } from '@/types/crediario';
+import { Crediario, MenuProduct } from '@/types/crediario';
+
+// Minimal shapes for external data
+type RawProduct = {
+  nome?: string;
+  name?: string;
+  preco?: number | string;
+  price?: number | string;
+  categoria?: string;
+  descricao?: string;
+  description?: string;
+  isHidden?: boolean;
+};
+type Pedido = Record<string, unknown>;
 
 export async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
   const pin = localStorage.getItem('loggedInUserPin');
@@ -93,7 +106,7 @@ export async function concludeCrediario(crediarioId: string): Promise<void> {
 export async function getMenuProducts(): Promise<MenuProduct[]> {
   const response = await fetchWithAuth(`${BACKEND_URL}/getMenuCache`);
   const data = await response.json();
-  const rawProducts = Object.values(data.products || {}).flat() as any[];
+  const rawProducts = Object.values(data.products || {}).flat() as RawProduct[];
   
   return rawProducts
     .filter(p => !p.isHidden)
@@ -108,7 +121,8 @@ export async function getMenuProducts(): Promise<MenuProduct[]> {
     .sort((a, b) => a.nome.localeCompare(b.nome));
 }
 
-export async function getPedidos(): Promise<any[]> {
+export async function getPedidos(): Promise<Pedido[]> {
   const response = await fetchWithAuth(`${BACKEND_URL}/getPedidos`);
-  return Array.isArray(response) ? response : await response.json();
+  const data = await response.json();
+  return Array.isArray(data) ? (data as Pedido[]) : [];
 }

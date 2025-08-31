@@ -1,13 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, Bot, User, X, MessageCircle } from 'lucide-react';
+import { Send, Bot, User, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crediario } from '@/types/crediario';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: string;
@@ -19,6 +18,12 @@ interface Message {
 interface CrediarioAIChatProps {
   crediarios: Crediario[];
 }
+
+type ExecutedAction = {
+  action: string;
+  parameters: Record<string, unknown>;
+  reasoning: string;
+};
 
 export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
   const [messages, setMessages] = useState<Message[]>([
@@ -59,8 +64,10 @@ export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
       
       // Show any executed actions to the user
       if (data.executedActions && data.executedActions.length > 0) {
-        data.executedActions.forEach((action: any) => {
-          toast.success(`✅ ${action.reasoning}`);
+        (data.executedActions as ExecutedAction[]).forEach((action) => {
+          if (action?.reasoning) {
+            toast.success(`✅ ${action.reasoning}`);
+          }
         });
       }
       
@@ -96,7 +103,7 @@ export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
       };
       
       setMessages(prev => [...prev, aiResponse]);
-    } catch (error) {
+    } catch {
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),
         content: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
