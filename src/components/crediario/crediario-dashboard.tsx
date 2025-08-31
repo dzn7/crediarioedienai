@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Search, RefreshCw, BarChart3, MessageCircle } from 'lucide-react';
+import { Plus, Search, RefreshCw, BarChart3 } from 'lucide-react';
 import { useCrediarios } from '@/hooks/useCrediarios';
 import { CrediarioCard } from './crediario-card';
 import { CreateCrediarioModal } from './create-crediario-modal';
@@ -262,7 +261,7 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
                   onEditName={(c) => {
                     toast.info('Funcionalidade de edição será implementada em breve');
                   }}
-                  onViewHistory={(c) => {
+                  onViewHistory={() => {
                     toast.info('Histórico de pedidos será implementado em breve');
                   }}
                   onConclude={(c) => {
@@ -316,10 +315,10 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
         open={transactionsModalOpen}
         onClose={() => setTransactionsModalOpen(false)}
         crediario={selectedCrediario}
-        onEditTransaction={(c, t) => {
+        onEditTransaction={() => {
           toast.info('Edição de transação será implementada em breve');
         }}
-        onDeleteTransaction={(c, t) => {
+        onDeleteTransaction={() => {
           toast.info('Exclusão de transação será implementada em breve');
         }}
       />

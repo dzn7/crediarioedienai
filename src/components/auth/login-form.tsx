@@ -36,7 +36,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       } else {
         toast.error('PIN inválido. Tente novamente.');
       }
-    } catch (error) {
+    } catch {
       toast.error('Erro ao fazer login');
     } finally {
       setLoading(false);

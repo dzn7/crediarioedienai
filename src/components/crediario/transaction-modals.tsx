@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { addCrediarioTransaction } from '@/lib/api';
 import { Crediario } from '@/types/crediario';
@@ -41,7 +40,7 @@ export function AddPaymentModal({ open, onClose, onSuccess, crediario }: Transac
       onClose();
       setAmount('');
       setDescription('');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao registrar pagamento');
     } finally {
       setLoading(false);
@@ -111,7 +110,7 @@ export function AddConsumptionModal({ open, onClose, onSuccess, crediario }: Tra
       setAmount('');
       setDescription('');
       setItemsConsumed('');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao adicionar consumo');
     } finally {
       setLoading(false);
@@ -201,7 +200,7 @@ export function AddInterestModal({ open, onClose, onSuccess, crediario }: Transa
       onClose();
       setPercentage('');
       setDescription('');
-    } catch (error) {
+    } catch {
       toast.error('Erro ao adicionar juros');
     } finally {
       setLoading(false);

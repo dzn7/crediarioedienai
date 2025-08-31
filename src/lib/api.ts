@@ -4,13 +4,20 @@ import { Crediario, MenuProduct } from '@/types/crediario';
 // Reusable error with HTTP status and optional response body
 export class ApiError extends Error {
   status: number;
-  data?: any;
-  constructor(status: number, message: string, data?: any) {
+  data?: ApiResponseBody;
+  constructor(status: number, message: string, data?: ApiResponseBody) {
     super(message);
     this.status = status;
     this.data = data;
   }
 }
+
+// Generic API response body shape we expect back from the backend
+type ApiResponseBody = Record<string, unknown> & {
+  message?: string;
+  error?: string;
+  crediario?: Crediario;
+};
 
 // Minimal shapes for external data
 type RawProduct = {
@@ -132,7 +139,8 @@ export async function concludeCrediario(crediarioId: string): Promise<void> {
   if (!response.ok) {
     throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
   }
-  return data as any;
+  // Backend returns a message, but callers don't need it here.
+  return;
 }
 
 export async function getMenuProducts(): Promise<MenuProduct[]> {

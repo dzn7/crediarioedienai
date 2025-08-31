@@ -2,7 +2,7 @@ import { User } from '@/types/crediario';
 
 // Local users (matching the original system)
 const localUsers: User[] = [
-  { pin: '1234', displayName: 'Proprietário', role: 'owner' },
+  { pin: '3007', displayName: 'Proprietário', role: 'owner' },
   { pin: '5678', displayName: 'Garçom', role: 'waiter' }
 ];
 

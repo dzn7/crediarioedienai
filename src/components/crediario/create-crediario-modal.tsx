@@ -61,7 +61,7 @@ export function CreateCrediarioModal({
     try {
       const role = typeof window !== 'undefined' ? localStorage.getItem('loggedInUserRole') : null;
       setUserRole(role);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [open]);

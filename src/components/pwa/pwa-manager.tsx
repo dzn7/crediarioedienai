@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 
 export function PWAManager() {
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
-  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
