@@ -45,11 +45,24 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Compute balance from history (legacy parity). Fallback to totalBalance when history is missing.
+  const getComputedBalance = (c: Crediario): number => {
+    const hist = Array.isArray(c.history) ? c.history : [];
+    if (hist.length === 0) return Number(c.totalBalance) || 0;
+    return hist.reduce((acc, t) => {
+      const amt = Number(t.amount) || 0;
+      if (t.type === 'consumption' || t.type === 'interest') return acc + amt;
+      if (t.type === 'payment') return acc - amt;
+      return acc;
+    }, 0);
+  };
+
   const filteredCrediarios = crediarios.filter((crediario) => {
     const matchesSearch = crediario.customerName.toLowerCase().includes(searchTerm.toLowerCase());
     // balanceFilter values: 'all' | 'positive' | 'zero'
-    if (balanceFilter === 'positive' && Number(crediario.totalBalance) <= 0) return false;
-    if (balanceFilter === 'zero' && Number(crediario.totalBalance) !== 0) return false;
+    const bal = getComputedBalance(crediario);
+    if (balanceFilter === 'positive' && bal <= 0) return false;
+    if (balanceFilter === 'zero' && bal !== 0) return false;
     return matchesSearch;
   });
 
@@ -58,7 +71,7 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
       case 'name':
         return a.customerName.localeCompare(b.customerName);
       case 'balance':
-        return (Number(b.totalBalance) || 0) - (Number(a.totalBalance) || 0);
+        return getComputedBalance(b) - getComputedBalance(a);
       case 'date': {
         const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -74,9 +87,9 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
     }
   });
 
-  const totalBalance = crediarios.reduce((sum, c) => sum + (Number(c.totalBalance) || 0), 0);
+  const totalBalance = crediarios.reduce((sum, c) => sum + getComputedBalance(c), 0);
   const activeCount = crediarios.length;
-  const debtorsCount = crediarios.filter(c => Number(c.totalBalance) > 0).length;
+  const debtorsCount = crediarios.filter(c => getComputedBalance(c) > 0).length;
 
   const handleModalSuccess = () => {
     refetch();

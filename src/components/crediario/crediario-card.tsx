@@ -37,6 +37,17 @@ export function CrediarioCard({
     ? new Date(lastTransaction.date).toLocaleDateString('pt-BR')
     : 'Nunca';
 
+  const computedBalance = (() => {
+    const hist = Array.isArray(crediario.history) ? crediario.history : [];
+    if (hist.length === 0) return Number(crediario.totalBalance) || 0;
+    return hist.reduce((acc, t) => {
+      const amt = Number(t.amount) || 0;
+      if (t.type === 'consumption' || t.type === 'interest') return acc + amt;
+      if (t.type === 'payment') return acc - amt;
+      return acc;
+    }, 0);
+  })();
+
   if (isMobile) {
     return (
       <Button
@@ -48,8 +59,8 @@ export function CrediarioCard({
           <div className="font-semibold text-lg">{crediario.customerName}</div>
           <div className="text-sm text-muted-foreground">{transactionCount} transações</div>
         </div>
-        <Badge variant={crediario.totalBalance > 0 ? 'destructive' : 'default'} className="text-lg">
-          R$ {formatBR(crediario.totalBalance)}
+        <Badge variant={computedBalance > 0 ? 'destructive' : 'default'} className="text-lg">
+          R$ {formatBR(computedBalance)}
         </Badge>
       </Button>
     );
@@ -60,8 +71,8 @@ export function CrediarioCard({
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <div className="space-y-1">
           <h3 className="font-semibold text-lg">{crediario.customerName}</h3>
-          <Badge variant={crediario.totalBalance > 0 ? 'destructive' : 'default'}>
-            R$ {formatBR(crediario.totalBalance)}
+          <Badge variant={computedBalance > 0 ? 'destructive' : 'default'}>
+            R$ {formatBR(computedBalance)}
           </Badge>
         </div>
         <DropdownMenu>
@@ -112,3 +123,4 @@ export function CrediarioCard({
     </Card>
   );
 }
+
