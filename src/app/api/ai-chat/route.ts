@@ -2,14 +2,14 @@
  import { Mistral } from '@mistralai/mistralai';
  import { Crediario } from '@/types/crediario';
 
- const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
- const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://southamerica-east1-edienailanches.cloudfunctions.net';
- const mistral = new Mistral({ apiKey: MISTRAL_API_KEY || '' });
+const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://southamerica-east1-edienailanches.cloudfunctions.net';
+const mistral = new Mistral({ apiKey: MISTRAL_API_KEY || '' });
 
- // Simple in-memory cache (per server instance)
- type CacheEntry = { data: any; ts: number };
- const CACHE_TTL_MS = 60_000; // 60s
- const aiCache = new Map<string, CacheEntry>();
+// Simple in-memory cache (per server instance)
+type CacheEntry = { data: unknown; ts: number };
+const CACHE_TTL_MS = 60_000; // 60s
+const aiCache = new Map<string, CacheEntry>();
 
 async function fetchWithAuth(url: string, options: RequestInit = {}, role: string, pin: string) {
   const defaultHeaders = {

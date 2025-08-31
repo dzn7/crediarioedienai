@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Send, Bot, User, MessageCircle, X, Loader2 } from 'lucide-react';
+import { Send, Bot, MessageCircle, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -170,23 +170,23 @@ export function CrediarioAIChat({ crediarios }: CrediarioAIChatProps) {
                 <div className="grid grid-cols-1 gap-2">
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">•</span>
-                    <p className="text-sm text-gray-700">"Quem está devendo?"</p>
+                    <p className="text-sm text-gray-700">&quot;Quem está devendo?&quot;</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">•</span>
-                    <p className="text-sm text-gray-700">"Criar crediário para [nome]"</p>
+                    <p className="text-sm text-gray-700">&quot;Criar crediário para [nome]&quot;</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">•</span>
-                    <p className="text-sm text-gray-700">"Adicionar pagamento de R$ X para [nome]"</p>
+                    <p className="text-sm text-gray-700">&quot;Adicionar pagamento de R$ X para [nome]&quot;</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">•</span>
-                    <p className="text-sm text-gray-700">"Análise de inadimplência"</p>
+                    <p className="text-sm text-gray-700">&quot;Análise de inadimplência&quot;</p>
                   </div>
                   <div className="flex items-start space-x-2">
                     <span className="text-blue-600">•</span>
-                    <p className="text-sm text-gray-700">"Sugestões de cobrança"</p>
+                    <p className="text-sm text-gray-700">&quot;Sugestões de cobrança&quot;</p>
                   </div>
                 </div>
               </div>
