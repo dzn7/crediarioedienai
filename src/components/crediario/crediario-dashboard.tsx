@@ -45,29 +45,38 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const filteredAndSortedCrediarios = crediarios
-    .filter(crediario => {
-      const matchesSearch = crediario.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesBalance = balanceFilter === 'all' || 
-        (balanceFilter === 'positive' && crediario.totalBalance > 0) ||
-        (balanceFilter === 'zero' && Math.abs(crediario.totalBalance) < 0.01);
-      return matchesSearch && matchesBalance;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.customerName.localeCompare(b.customerName);
-        case 'balance':
-          return b.totalBalance - a.totalBalance;
-        case 'date':
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-    });
+  const filteredCrediarios = crediarios.filter((crediario) => {
+    const matchesSearch = crediario.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+    // balanceFilter values: 'all' | 'positive' | 'zero'
+    if (balanceFilter === 'positive' && Number(crediario.totalBalance) <= 0) return false;
+    if (balanceFilter === 'zero' && Number(crediario.totalBalance) !== 0) return false;
+    return matchesSearch;
+  });
 
-  const totalBalance = crediarios.reduce((sum, c) => sum + c.totalBalance, 0);
+  const sortedCrediarios = [...filteredCrediarios].sort((a, b) => {
+    switch (sortBy) {
+      case 'name':
+        return a.customerName.localeCompare(b.customerName);
+      case 'balance':
+        return (Number(b.totalBalance) || 0) - (Number(a.totalBalance) || 0);
+      case 'date': {
+        const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bDate - aDate;
+      }
+      case 'lastTransaction': {
+        const aLastDate = a.history?.[0]?.date ? new Date(a.history[0].date).getTime() : 0;
+        const bLastDate = b.history?.[0]?.date ? new Date(b.history[0].date).getTime() : 0;
+        return bLastDate - aLastDate;
+      }
+      default:
+        return 0;
+    }
+  });
+
+  const totalBalance = crediarios.reduce((sum, c) => sum + (Number(c.totalBalance) || 0), 0);
   const activeCount = crediarios.length;
-  const debtorsCount = crediarios.filter(c => c.totalBalance > 0).length;
+  const debtorsCount = crediarios.filter(c => Number(c.totalBalance) > 0).length;
 
   const handleModalSuccess = () => {
     refetch();
@@ -207,7 +216,7 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
             ? "space-y-2" 
             : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           }>
-            {filteredAndSortedCrediarios.length === 0 ? (
+            {sortedCrediarios.length === 0 ? (
               <Card className="col-span-full">
                 <CardContent className="pt-6">
                   <p className="text-center text-muted-foreground">
@@ -216,7 +225,7 @@ export function CrediarioDashboard({ userRole }: CrediarioDashboardProps) {
                 </CardContent>
               </Card>
             ) : (
-              filteredAndSortedCrediarios.map((crediario) => (
+              sortedCrediarios.map((crediario) => (
                 <CrediarioCard
                   key={crediario.id}
                   crediario={crediario}
