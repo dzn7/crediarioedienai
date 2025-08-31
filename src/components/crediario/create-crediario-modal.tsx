@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { createCrediario, getMenuProducts } from '@/lib/api';
+import { createCrediario, getMenuProducts, ApiError } from '@/lib/api';
 import { parseNumber } from '@/lib/utils';
+import { useCrediarios } from '@/hooks/useCrediarios';
 import type { MenuProduct } from '@/types/crediario';
 
 interface CreateCrediarioModalProps {
@@ -33,6 +34,8 @@ export function CreateCrediarioModal({
   const [productsLoading, setProductsLoading] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [cart, setCart] = useState<Array<{ id: string; nome: string; preco: number; qty: number }>>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const { crediarios } = useCrediarios(userRole);
 
   useEffect(() => {
     if (!open) return;
@@ -50,6 +53,17 @@ export function CreateCrediarioModal({
     };
     load();
     return () => { cancelled = true; };
+  }, [open]);
+
+  // Load role from localStorage to enable client-side duplicate check via hook
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const role = typeof window !== 'undefined' ? localStorage.getItem('loggedInUserRole') : null;
+      setUserRole(role);
+    } catch (e) {
+      // ignore
+    }
   }, [open]);
 
   const filteredProducts = useMemo(() => {
@@ -94,6 +108,14 @@ export function CreateCrediarioModal({
       return;
     }
 
+    // Client-side duplicate check (best-effort). Backend still enforces 409.
+    const normalizedInput = customerName.trim().toLowerCase().replace(/\s+/g, ' ');
+    const exists = crediarios.some(c => (c.customerName || '').trim().toLowerCase().replace(/\s+/g, ' ') === normalizedInput);
+    if (exists) {
+      toast.error('Já existe um crediário ativo com este nome.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Prefer cart totals if user added items from the menu; otherwise fallback to manual fields
@@ -114,7 +136,17 @@ export function CreateCrediarioModal({
       setCart([]);
       setProductSearch('');
     } catch (error) {
-      toast.error('Erro ao criar crediário');
+      if (error instanceof ApiError) {
+        if (error.status === 409) {
+          toast.error(error.data?.message || 'Já existe um crediário ativo com este nome.');
+        } else if (error.status === 401 || error.status === 403) {
+          toast.error('Sem permissão. Faça login novamente.');
+        } else {
+          toast.error(error.data?.message || `Erro (${error.status}) ao criar crediário.`);
+        }
+      } else {
+        toast.error('Erro ao criar crediário');
+      }
       console.error('Error creating crediário:', error);
     } finally {
       setLoading(false);

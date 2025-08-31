@@ -1,6 +1,17 @@
 import { BACKEND_URL } from './firebase';
 import { Crediario, MenuProduct } from '@/types/crediario';
 
+// Reusable error with HTTP status and optional response body
+export class ApiError extends Error {
+  status: number;
+  data?: any;
+  constructor(status: number, message: string, data?: any) {
+    super(message);
+    this.status = status;
+    this.data = data;
+  }
+}
+
 // Minimal shapes for external data
 type RawProduct = {
   nome?: string;
@@ -34,10 +45,7 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}): Pro
     headers,
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
+  // Always return the response; callers decide how to handle non-OK statuses
   return response;
 }
 
@@ -47,7 +55,11 @@ export async function createCrediario(customerName: string, initialValue?: numbe
     method: 'POST',
     body: JSON.stringify({ customerName, initialValue, initialItemsConsumed }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return (data && (data.crediario || data)) as Crediario;
 }
 
 export async function addCrediarioTransaction(
@@ -61,7 +73,11 @@ export async function addCrediarioTransaction(
     method: 'POST',
     body: JSON.stringify({ crediarioId, type, amount, description, itemsConsumed }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return (data && (data.crediario || data)) as Crediario;
 }
 
 export async function updateCrediarioName(crediarioId: string, newCustomerName: string): Promise<Crediario> {
@@ -69,7 +85,11 @@ export async function updateCrediarioName(crediarioId: string, newCustomerName: 
     method: 'POST',
     body: JSON.stringify({ crediarioId, newCustomerName }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return (data && (data.crediario || data)) as Crediario;
 }
 
 export async function editCrediarioTransaction(
@@ -84,7 +104,11 @@ export async function editCrediarioTransaction(
     method: 'POST',
     body: JSON.stringify({ crediarioId, transactionId, type, amount, description, itemsConsumed }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return (data && (data.crediario || data)) as Crediario;
 }
 
 export async function deleteCrediarioTransaction(crediarioId: string, transactionId: string): Promise<Crediario> {
@@ -92,7 +116,11 @@ export async function deleteCrediarioTransaction(crediarioId: string, transactio
     method: 'POST',
     body: JSON.stringify({ crediarioId, transactionId }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return (data && (data.crediario || data)) as Crediario;
 }
 
 export async function concludeCrediario(crediarioId: string): Promise<void> {
@@ -100,12 +128,19 @@ export async function concludeCrediario(crediarioId: string): Promise<void> {
     method: 'PUT',
     body: JSON.stringify({ crediarioId }),
   });
-  return response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
+  return data as any;
 }
 
 export async function getMenuProducts(): Promise<MenuProduct[]> {
   const response = await fetchWithAuth(`${BACKEND_URL}/getMenuCache`);
-  const data = await response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
   const rawProducts = Object.values(data.products || {}).flat() as RawProduct[];
   
   return rawProducts
@@ -123,6 +158,9 @@ export async function getMenuProducts(): Promise<MenuProduct[]> {
 
 export async function getPedidos(): Promise<Pedido[]> {
   const response = await fetchWithAuth(`${BACKEND_URL}/getPedidos`);
-  const data = await response.json();
+  const data = await response.json().catch(() => undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, (data && (data.message || data.error)) || `HTTP ${response.status}`, data);
+  }
   return Array.isArray(data) ? (data as Pedido[]) : [];
 }
